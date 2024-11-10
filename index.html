@@ -107,6 +107,11 @@
             color: #e74c3c;
         }
 
+        .numbering {
+            font-weight: bold;
+            margin-right: 5px;
+        }
+
         h2 {
             margin-bottom: 20px;
             color: #2c3e50;
@@ -211,6 +216,9 @@
 
                 // Replace non-breaking spaces with regular spaces
                 content = content.replace(/\u00A0/g, ' ');
+
+                // Decode LaTeX-style encodings and HTML entities
+                content = decodeEntities(content);
 
                 let entries = [];
                 try {
@@ -405,6 +413,18 @@
         }
 
         /**
+         * Decodes LaTeX-style encodings and HTML entities into their respective characters.
+         * @param {string} text - The text to decode.
+         * @returns {string} - The decoded text.
+         */
+        function decodeEntities(text) {
+            // Create a temporary DOM element to leverage the browser's parsing
+            const txt = document.createElement("textarea");
+            txt.innerHTML = text;
+            return txt.value;
+        }
+
+        /**
          * Converts the list of bold names from "First Name Last Name" to last names.
          * @param {Array} boldNamesInput - Array of names in "First Name Last Name" format.
          * @returns {Array} - Array of last names for bolding.
@@ -445,7 +465,7 @@
                     keywords.includes(keyword) || 
                     title.toLowerCase().includes(keyword) ||
                     eprint.includes(keyword) ||
-                    journal.toLowerCase().includes(keyword) || // Added this line
+                    journal.toLowerCase().includes(keyword) || // Check journal name
                     (publisher.toLowerCase() === 'cold spring harbor laboratory' && !journal)
                 );
 
@@ -481,7 +501,7 @@
                     html += `<h2>Published Papers</h2>`;
                     published.forEach((cite, index) => {
                         const number = published.length - index;
-                        let citationStr = `${number}. ${cite.authors} (${cite.year}). ${cite.title}. <u>${cite.journal}</u>`;
+                        let citationStr = `<span class="numbering">${number}.</span> ${cite.authors} (${cite.year}). ${cite.title}. <u>${cite.journal}</u>`;
 
                         // Add Volume and Number
                         if (cite.volume) {
@@ -532,7 +552,7 @@
                             preprintInfo = 'bioRxiv';
                         }
 
-                        let citationStr = `${number}. ${cite.authors} (${cite.year}). ${cite.title}. `;
+                        let citationStr = `<span class="numbering">${number}.</span> ${cite.authors} (${cite.year}). ${cite.title}. `;
                         if (preprintInfo) {
                             citationStr += `${preprintInfo}`;
                         }
@@ -577,7 +597,7 @@
                     html += `<h2>Citations</h2>`;
                     combined.forEach((cite, index) => {
                         const number = total - index;
-                        let citationStr = `${number}. ${cite.authors} (${cite.year}). ${cite.title}. `;
+                        let citationStr = `<span class="numbering">${number}.</span> ${cite.authors} (${cite.year}). ${cite.title}. `;
 
                         if (cite.journal) {
                             citationStr += `<u>${cite.journal}</u>`;
@@ -660,7 +680,13 @@
                 }
 
                 // Format initials
-                const initials = firstNames.map(name => name.charAt(0).toUpperCase() + '.').join('');
+                const initials = firstNames.map(name => {
+                    if (name.length > 0) {
+                        return name.charAt(0).toUpperCase() + '.';
+                    } else {
+                        return '';
+                    }
+                }).join('');
 
                 // Construct formatted name
                 let formattedName = `${lastName} ${initials}`;
