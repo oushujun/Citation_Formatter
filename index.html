@@ -437,63 +437,70 @@
          * @returns {string} - The decoded text.
          */
         function decodeLaTeX(text) {
-            const latexToUnicodeMap = {
-                '\\~{n}': 'ñ',
-                '\\~{a}': 'ã',
-                '\\~{o}': 'õ',
-                '\\\'{e}': 'é',
-                '\\`{a}': 'à',
-                '\\`{e}': 'è',
-                '\\^{o}': 'ô',
-                '\\^{a}': 'â',
-                '\\\"{a}': 'ä',
-                '\\\"{e}': 'ë',
-                '\\\"{i}': 'ï',
-                '\\\"{o}': 'ö',
-                '\\\"{u}': 'ü',
-                '\\ss{}': 'ß',
-                '\\c{c}': 'ç',
-                '\\.{C}': 'Ċ',
-                '\\.{c}': 'ċ',
-                '\\ae{}': 'æ',
-                '\\AE{}': 'Æ',
-                '\\o{}': 'ø',
-                '\\O{}': 'Ø',
-                '\\u{g}': 'ǵ',
-                '\\u{G}': 'Ǵ',
-                '\\u{u}': 'ű',
-                '\\u{U}': 'Ű',
-                '\\v{c}': 'č',
-                '\\v{C}': 'Č',
-                '\\v{s}': 'š',
-                '\\v{S}': 'Š',
-                '\\H{o}': 'ő',
-                '\\H{O}': 'Ő',
-                '\\h{o}': 'ő',
-                '\\h{O}': 'Ő',
-                '\\c{C}': 'Ç',
-                '\\`{o}': 'ò',
-                '\\`{u}': 'ù',
-                '\\'{a}': 'á',
-                '\\'{i}': 'í',
-                '\\'{o}': 'ó',
-                '\\'{u}': 'ú',
-                '\\'{c}': 'ć',
-                '\\'{C}': 'Ć',
-                '\\~{c}': 'ç',
-                '\\~{C}': 'Ç',
-                '\\\"{c}': 'ċ',
-                '\\\"{C}': 'Ċ'
+            const latexPatterns = [
+                {pattern: /\\\"{a}/g, replacement: 'ä'},
+                {pattern: /\\\"{A}/g, replacement: 'Ä'},
+                {pattern: /\\\"{e}/g, replacement: 'ë'},
+                {pattern: /\\\"{E}/g, replacement: 'Ë'},
+                {pattern: /\\\"{i}/g, replacement: 'ï'},
+                {pattern: /\\\"{I}/g, replacement: 'Ï'},
+                {pattern: /\\\"{o}/g, replacement: 'ö'},
+                {pattern: /\\\"{O}/g, replacement: 'Ö'},
+                {pattern: /\\\"{u}/g, replacement: 'ü'},
+                {pattern: /\\\"{U}/g, replacement: 'Ü'},
+                {pattern: /\\\'{a}/g, replacement: 'á'},
+                {pattern: /\\\'{A}/g, replacement: 'Á'},
+                {pattern: /\\\'{e}/g, replacement: 'é'},
+                {pattern: /\\\'{E}/g, replacement: 'É'},
+                {pattern: /\\\'{i}/g, replacement: 'í'},
+                {pattern: /\\\'{I}/g, replacement: 'Í'},
+                {pattern: /\\\'{o}/g, replacement: 'ó'},
+                {pattern: /\\\'{O}/g, replacement: 'Ó'},
+                {pattern: /\\\'{u}/g, replacement: 'ú'},
+                {pattern: /\\\'{U}/g, replacement: 'Ú'},
+                {pattern: /\\`{a}/g, replacement: 'à'},
+                {pattern: /\\`{A}/g, replacement: 'À'},
+                {pattern: /\\`{e}/g, replacement: 'è'},
+                {pattern: /\\`{E}/g, replacement: 'È'},
+                {pattern: /\\^{a}/g, replacement: 'â'},
+                {pattern: /\\^{A}/g, replacement: 'Â'},
+                {pattern: /\\^{e}/g, replacement: 'ê'},
+                {pattern: /\\^{E}/g, replacement: 'Ê'},
+                {pattern: /\\^{i}/g, replacement: 'î'},
+                {pattern: /\\^{I}/g, replacement: 'Î'},
+                {pattern: /\\^{o}/g, replacement: 'ô'},
+                {pattern: /\\^{O}/g, replacement: 'Ô'},
+                {pattern: /\\^{u}/g, replacement: 'û'},
+                {pattern: /\\^{U}/g, replacement: 'Û'},
+                {pattern: /\\~{n}/g, replacement: 'ñ'},
+                {pattern: /\\~{N}/g, replacement: 'Ñ'},
+                {pattern: /\\~{a}/g, replacement: 'ã'},
+                {pattern: /\\~{A}/g, replacement: 'Ã'},
+                {pattern: /\\~{o}/g, replacement: 'õ'},
+                {pattern: /\\~{O}/g, replacement: 'Õ'},
+                {pattern: /\\c{c}/g, replacement: 'ç'},
+                {pattern: /\\c{C}/g, replacement: 'Ç'},
+                {pattern: /\\ss{}/g, replacement: 'ß'},
+                {pattern: /\\ae{}/g, replacement: 'æ'},
+                {pattern: /\\AE{}/g, replacement: 'Æ'},
+                {pattern: /\\o{}/g, replacement: 'ø'},
+                {pattern: /\\O{}/g, replacement: 'Ø'},
+                {pattern: /\\v{c}/g, replacement: 'č'},
+                {pattern: /\\v{C}/g, replacement: 'Č'},
+                {pattern: /\\v{s}/g, replacement: 'š'},
+                {pattern: /\\v{S}/g, replacement: 'Š'},
+                {pattern: /\\H{o}/g, replacement: 'ő'},
+                {pattern: /\\H{O}/g, replacement: 'Ő'},
+                {pattern: /\\h{o}/g, replacement: 'ő'},
+                {pattern: /\\h{O}/g, replacement: 'Ő'}
                 // Add more mappings as needed
-            };
+            ];
 
-            // Replace LaTeX encodings with Unicode characters
-            for (const [latex, unicode] of Object.entries(latexToUnicodeMap)) {
-                const regex = new RegExp(latex, 'g');
-                text = text.replace(regex, unicode);
-            }
+            latexPatterns.forEach(({pattern, replacement}) => {
+                text = text.replace(pattern, replacement);
+            });
 
-            // Remove remaining braces if any
+            // Remove remaining braces
             text = text.replace(/[{}]/g, '');
 
             return text;
