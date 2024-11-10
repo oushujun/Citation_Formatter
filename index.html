@@ -220,6 +220,12 @@
                 // Decode LaTeX-style encodings and HTML entities
                 content = decodeEntities(content);
 
+                // Decode LaTeX-style encodings to Unicode
+                content = decodeLaTeX(content);
+
+                // Final replacement of non-breaking spaces, in case any remain
+                content = content.replace(/\u00A0/g, ' ');
+
                 let entries = [];
                 try {
                     if (fileExtension === 'bib') {
@@ -422,6 +428,75 @@
             const txt = document.createElement("textarea");
             txt.innerHTML = text;
             return txt.value;
+        }
+
+        /**
+         * Decodes LaTeX-style encodings into their respective Unicode characters.
+         * Handles common accents and special characters.
+         * @param {string} text - The text to decode.
+         * @returns {string} - The decoded text.
+         */
+        function decodeLaTeX(text) {
+            const latexToUnicodeMap = {
+                '\\~{n}': 'ñ',
+                '\\~{a}': 'ã',
+                '\\~{o}': 'õ',
+                '\\\'{e}': 'é',
+                '\\`{a}': 'à',
+                '\\`{e}': 'è',
+                '\\^{o}': 'ô',
+                '\\^{a}': 'â',
+                '\\\"{a}': 'ä',
+                '\\\"{e}': 'ë',
+                '\\\"{i}': 'ï',
+                '\\\"{o}': 'ö',
+                '\\\"{u}': 'ü',
+                '\\ss{}': 'ß',
+                '\\c{c}': 'ç',
+                '\\.{C}': 'Ċ',
+                '\\.{c}': 'ċ',
+                '\\ae{}': 'æ',
+                '\\AE{}': 'Æ',
+                '\\o{}': 'ø',
+                '\\O{}': 'Ø',
+                '\\u{g}': 'ǵ',
+                '\\u{G}': 'Ǵ',
+                '\\u{u}': 'ű',
+                '\\u{U}': 'Ű',
+                '\\v{c}': 'č',
+                '\\v{C}': 'Č',
+                '\\v{s}': 'š',
+                '\\v{S}': 'Š',
+                '\\H{o}': 'ő',
+                '\\H{O}': 'Ő',
+                '\\h{o}': 'ő',
+                '\\h{O}': 'Ő',
+                '\\c{C}': 'Ç',
+                '\\`{o}': 'ò',
+                '\\`{u}': 'ù',
+                '\\'{a}': 'á',
+                '\\'{i}': 'í',
+                '\\'{o}': 'ó',
+                '\\'{u}': 'ú',
+                '\\'{c}': 'ć',
+                '\\'{C}': 'Ć',
+                '\\~{c}': 'ç',
+                '\\~{C}': 'Ç',
+                '\\\"{c}': 'ċ',
+                '\\\"{C}': 'Ċ'
+                // Add more mappings as needed
+            };
+
+            // Replace LaTeX encodings with Unicode characters
+            for (const [latex, unicode] of Object.entries(latexToUnicodeMap)) {
+                const regex = new RegExp(latex, 'g');
+                text = text.replace(regex, unicode);
+            }
+
+            // Remove remaining braces if any
+            text = text.replace(/[{}]/g, '');
+
+            return text;
         }
 
         /**
