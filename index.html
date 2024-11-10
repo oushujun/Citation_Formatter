@@ -220,12 +220,7 @@
                 // Decode HTML entities
                 content = decodeEntities(content);
 
-                // Decode LaTeX-style encodings
-                content = decodeLaTeX(content);
-
-                // Final replacement of non-breaking spaces, in case any remain
-                content = content.replace(/\u00A0/g, ' ');
-
+                // Parse BibTeX before decoding LaTeX
                 let entries = [];
                 try {
                     if (fileExtension === 'bib') {
@@ -246,6 +241,24 @@
                     alert('No valid entries found in the citation file.');
                     return;
                 }
+
+                // Now, apply decodeLaTeX on each field value
+                entries.forEach(entry => {
+                    for (let key in entry.fields) {
+                        if (entry.fields.hasOwnProperty(key)) {
+                            entry.fields[key] = decodeLaTeX(entry.fields[key]);
+                        }
+                    }
+                });
+
+                // Replace non-breaking spaces again, in case any remain after decoding LaTeX
+                entries.forEach(entry => {
+                    for (let key in entry.fields) {
+                        if (entry.fields.hasOwnProperty(key)) {
+                            entry.fields[key] = entry.fields[key].replace(/\u00A0/g, ' ');
+                        }
+                    }
+                });
 
                 const boldNamesInput = boldInput.split(',').map(name => name.trim()).filter(name => name.length > 0);
                 const boldNames = convertBoldNames(boldNamesInput);
@@ -273,10 +286,13 @@
                 const fieldsStr = match[3];
                 const fields = {};
                 // Improved field regex to handle multiline and various spacing
-                const fieldRegex = /(\w+)\s*=\s*[{"]([^}"]*)[}"]/g;
+                // This regex captures fields with braces, quotes, or unbraced values
+                const fieldRegex = /(\w+)\s*=\s*(?:{([^}]*)}|\"([^"]*)\"|([^,}]*))/g;
                 let fieldMatch;
                 while ((fieldMatch = fieldRegex.exec(fieldsStr)) !== null) {
-                    fields[fieldMatch[1].toLowerCase()] = fieldMatch[2].trim();
+                    const key = fieldMatch[1].toLowerCase();
+                    const value = fieldMatch[2] || fieldMatch[3] || fieldMatch[4] || '';
+                    fields[key] = value.trim();
                 }
                 entries.push({
                     type: entryType,
@@ -442,15 +458,23 @@
         function decodeLaTeX(text) {
             const latexPatterns = [
                 {pattern: /\\\"{a}/g, replacement: 'ä'},
+                {pattern: /\\\{\"a}/g, replacement: 'ä'}, // Added pattern for \{\"a}
                 {pattern: /\\\"{A}/g, replacement: 'Ä'},
+                {pattern: /\\\{\"A}/g, replacement: 'Ä'}, // Added pattern for \{\"A}
                 {pattern: /\\\"{e}/g, replacement: 'ë'},
+                {pattern: /\\\{\"e}/g, replacement: 'ë'}, // Added pattern for \{\"e}
                 {pattern: /\\\"{E}/g, replacement: 'Ë'},
+                {pattern: /\\\{\"E}/g, replacement: 'Ë'}, // Added pattern for \{\"E}
                 {pattern: /\\\"{i}/g, replacement: 'ï'},
+                {pattern: /\\\{\"i}/g, replacement: 'ï'}, // Added pattern for \{\"i}
                 {pattern: /\\\"{I}/g, replacement: 'Ï'},
+                {pattern: /\\\{\"I}/g, replacement: 'Ï'}, // Added pattern for \{\"I}
                 {pattern: /\\\"{o}/g, replacement: 'ö'},
+                {pattern: /\\\{\"o}/g, replacement: 'ö'}, // Added pattern for \{\"o}
                 {pattern: /\\\"{O}/g, replacement: 'Ö'},
+                {pattern: /\\\{\"O}/g, replacement: 'Ö'}, // Added pattern for \{\"O}
                 {pattern: /\\\"{u}/g, replacement: 'ü'},
-                {pattern: /\\\"{U}/g, replacement: 'Ü'},
+                {pattern: /\\\{\"u}/g, replacement: 'ü'}, // Added pattern for \{\"u}
                 {pattern: /\\\'{a}/g, replacement: 'á'},
                 {pattern: /\\\'{A}/g, replacement: 'Á'},
                 {pattern: /\\\'{e}/g, replacement: 'é'},
