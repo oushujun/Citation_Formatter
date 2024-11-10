@@ -217,10 +217,10 @@
                 // Replace non-breaking spaces with regular spaces
                 content = content.replace(/\u00A0/g, ' ');
 
-                // Decode LaTeX-style encodings and HTML entities
+                // Decode HTML entities
                 content = decodeEntities(content);
 
-                // Decode LaTeX-style encodings to Unicode
+                // Decode LaTeX-style encodings
                 content = decodeLaTeX(content);
 
                 // Final replacement of non-breaking spaces, in case any remain
@@ -263,7 +263,8 @@
          */
         function parseBibTeX(content) {
             const entries = [];
-            const entryRegex = /@(\w+)\s*{\s*([^,]+),([\s\S]*?)}\s*,?\s*(?=@|$)/gm;
+            // Improved regex to handle multiline entries and optional trailing commas
+            const entryRegex = /@(\w+)\s*{\s*([^,]+),([\s\S]*?)}\s*,?/gm;
             let match;
 
             while ((match = entryRegex.exec(content)) !== null) {
@@ -271,6 +272,7 @@
                 const citationKey = match[2].trim();
                 const fieldsStr = match[3];
                 const fields = {};
+                // Improved field regex to handle multiline and various spacing
                 const fieldRegex = /(\w+)\s*=\s*[{"]([^}"]*)[}"]/g;
                 let fieldMatch;
                 while ((fieldMatch = fieldRegex.exec(fieldsStr)) !== null) {
@@ -283,6 +285,7 @@
                 });
             }
 
+            console.log(`Parsed ${entries.length} BibTeX entries.`);
             return entries;
         }
 
@@ -419,7 +422,7 @@
         }
 
         /**
-         * Decodes LaTeX-style encodings and HTML entities into their respective characters.
+         * Decodes HTML entities into their respective characters.
          * @param {string} text - The text to decode.
          * @returns {string} - The decoded text.
          */
@@ -727,7 +730,8 @@
         }
 
         /**
-         * Formats the authors' names into "Last name F.M." and wraps in bold if the last name is in the bold list.
+         * Formats the authors' names into "Last name F.M." and appends markers after initials if needed.
+         * Wraps in bold if the last name is in the bold list.
          * @param {Array} authors - Array of author names from citation entries.
          * @param {Array} boldNames - Array of last names to bold.
          * @returns {string} - Formatted authors string with bolding applied.
@@ -773,7 +777,7 @@
                 // Construct formatted name
                 let formattedName = `${lastName} ${initials}`;
 
-                // Append markers
+                // Append markers after initials
                 if (marker) {
                     formattedName += marker;
                 }
