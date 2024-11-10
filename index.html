@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Citation Formatter (v1.0)</title>
+    <title>Citation Formatter (v1.01)</title>
     <style>
         /* Reset some basic elements for consistency */
         * {
@@ -158,7 +158,7 @@
 <body>
 
     <div class="container">
-        <h1>Citation Formatter (v1.0)</h1>
+        <h1>Citation Formatter (v1.01)</h1>
 
         <div class="section">
             <label for="bibtexFile">Upload Citation File (.bib, .ris, .enw):</label>
@@ -208,6 +208,9 @@
 
                 // Replace LaTeX escaped underscores with actual underscores
                 content = content.replace(/\\_/g, '_');
+
+                // Replace non-breaking spaces with regular spaces
+                content = content.replace(/\u00A0/g, ' ');
 
                 let entries = [];
                 try {
@@ -320,7 +323,7 @@
                 const mappedFields = {};
                 mappedFields.type = fields.ty || fields['0'] || '';
                 mappedFields.key = fields.id || '';
-
+                
                 // Author mapping based on file type
                 if (fileType === 'enw') {
                     mappedFields.author = Array.isArray(fields.a) ? fields.a.join(' and ') : fields.a || '';
@@ -335,7 +338,7 @@
                 mappedFields.year = fields.py || fields.d || '';
                 mappedFields.volume = fields.vl || fields.v || '';
                 mappedFields.number = fields.is || fields.n || '';
-
+                
                 // Combine SP and EP for pages if available (RIS)
                 if (fileType === 'ris') {
                     if (fields.sp && fields.ep) {
@@ -438,8 +441,8 @@
                 const eprint = entry.fields['eprint'] ? entry.fields['eprint'].toLowerCase() : '';
 
                 // Enhanced preprint detection: Check journal name as well
-                const isPreprint = preprintKeywords.some(keyword =>
-                    keywords.includes(keyword) ||
+                const isPreprint = preprintKeywords.some(keyword => 
+                    keywords.includes(keyword) || 
                     title.toLowerCase().includes(keyword) ||
                     eprint.includes(keyword) ||
                     journal.toLowerCase().includes(keyword) || // Added this line
@@ -478,7 +481,7 @@
                     html += `<h2>Published Papers</h2>`;
                     published.forEach((cite, index) => {
                         const number = published.length - index;
-                        let citationStr = `${number}. ${cite.authors} (${cite.year}). ${cite.title}. ${cite.journal}`;
+                        let citationStr = `${number}. ${cite.authors} (${cite.year}). ${cite.title}. <u>${cite.journal}</u>`;
 
                         // Add Volume and Number
                         if (cite.volume) {
@@ -533,7 +536,7 @@
                         if (preprintInfo) {
                             citationStr += `${preprintInfo}`;
                         }
-
+                        
                         // Add Volume and Number if available
                         if (cite.volume) {
                             citationStr += ` ${cite.volume}`;
@@ -577,7 +580,7 @@
                         let citationStr = `${number}. ${cite.authors} (${cite.year}). ${cite.title}. `;
 
                         if (cite.journal) {
-                            citationStr += `${cite.journal}`;
+                            citationStr += `<u>${cite.journal}</u>`;
                         } else if (cite.eprint || (cite.publisher.toLowerCase() === 'cold spring harbor laboratory')) {
                             if (cite.eprint) {
                                 // Check if eprint is a DOI or URL
