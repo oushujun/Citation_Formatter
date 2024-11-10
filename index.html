@@ -302,6 +302,11 @@
             }
 
             console.log(`Parsed ${entries.length} BibTeX entries.`);
+            // Log each entry's fields for debugging
+            entries.forEach((entry, index) => {
+                console.log(`Entry ${index + 1}:`, entry.fields);
+            });
+
             return entries;
         }
 
