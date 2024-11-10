@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Citation Formatter</title>
+    <style>
+        /* Reset some basic elements for consistency */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f4f9;
+            color: #333;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #2c3e50;
+        }
+
+        .container {
+            flex: 1;
+            max-width: 900px;
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 30px 40px;
+            border-radius: 10px;
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .section {
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #34495e;
+        }
+
+        input[type="file"],
+        input[type="text"] {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        input[type="file"]:focus,
+        input[type="text"]:focus {
+            border-color: #2980b9;
+            outline: none;
+        }
+
+        .options {
+            display: flex;
+            align-items: center;
+            margin-top: 10px;
+        }
+
+        .options input[type="checkbox"] {
+            margin-right: 10px;
+            width: 20px;
+            height: 20px;
+        }
+
+        button {
+            width: 100%;
+            padding: 14px;
+            background-color: #2980b9;
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            font-size: 18px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            margin-top: 15px;
+        }
+
+        button:hover {
+            background-color: #1f6391;
+        }
+
+        #output {
+            margin-top: 40px;
+        }
+
+        .citation {
+            margin-bottom: 15px;
+            line-height: 1.6;
+        }
+
+        .bold {
+            font-weight: bold;
+            color: #e74c3c;
+        }
+
+        h2 {
+            margin-bottom: 20px;
+            color: #2c3e50;
+            border-bottom: 2px solid #ecf0f1;
+            padding-bottom: 5px;
+        }
+
+        /* Footer Styling */
+        .footer {
+            text-align: center;
+            padding: 20px;
+            background-color: #2c3e50;
+            color: #ecf0f1;
+            margin-top: 40px;
+            border-radius: 10px;
+        }
+
+        .footer a {
+            color: #3498db;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        .footer a:hover {
+            text-decoration: underline;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 600px) {
+            .container {
+                padding: 20px 25px;
+            }
+
+            button {
+                font-size: 16px;
+            }
+
+            label {
+                font-size: 15px;
+            }
+
+            .citation-number {
+                display: block;
+                margin-bottom: 5px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Citation Formatter</h1>
+
+        <div class="section">
+            <label for="bibtexFile">Upload Citation File (.bib, .ris, .enw):</label>
+            <input type="file" id="bibtexFile" accept=".bib, .ris, .enw">
+        </div>
+
+        <div class="section">
+            <label for="boldNames">Names to Bold (comma separated, First Name Last Name):</label>
+            <input type="text" id="boldNames" placeholder="e.g., John Hill, Alice Smith">
+        </div>
+
+        <div class="section options">
+            <input type="checkbox" id="separateLists">
+            <label for="separateLists">Separate Published Papers and Preprints</label>
+        </div>
+
+        <button id="formatBtn">Format Citations</button>
+
+        <div class="section" id="output">
+            <!-- Formatted citations will appear here -->
+        </div>
+    </div>
+
+    <!-- Footer Section -->
+    <div class="footer">
+        © 2024 Shujun Ou and ChatGPT o1-mini. <a href="https://github.com/oushujun" target="_blank">View the source code on GitHub</a>.
+    </div>
+
+    <script>
+        document.getElementById('formatBtn').addEventListener('click', function() {
+            const fileInput = document.getElementById('bibtexFile');
+            const boldInput = document.getElementById('boldNames').value;
+            const separateLists = document.getElementById('separateLists').checked;
+            const outputDiv = document.getElementById('output');
+
+            if (fileInput.files.length === 0) {
+                alert('Please upload a citation file (.bib, .ris, .enw).');
+                return;
+            }
+
+            const file = fileInput.files[0];
+            const reader = new FileReader();
+            const fileExtension = file.name.split('.').pop().toLowerCase();
+
+            reader.onload = function(e) {
+                let content = e.target.result;
+
+                // Replace LaTeX escaped underscores with actual underscores
+                content = content.replace(/\\_/g, '_');
+
+                let entries = [];
+                try {
+                    if (fileExtension === 'bib') {
+                        entries = parseBibTeX(content);
+                    } else if (fileExtension === 'ris' || fileExtension === 'enw') {
+                        entries = parseRIS(content, fileExtension);
+                    } else {
+                        alert('Unsupported file format. Please upload a .bib, .ris, or .enw file.');
+                        return;
+                    }
+                } catch (error) {
+                    alert('Error parsing the citation file. Please ensure it is correctly formatted.');
+                    console.error(error);
+                    return;
+                }
+
+                if (entries.length === 0) {
+                    alert('No valid entries found in the citation file.');
+                    return;
+                }
+
+                const boldNamesInput = boldInput.split(',').map(name => name.trim()).filter(name => name.length > 0);
+                const boldNames = convertBoldNames(boldNamesInput);
+                const formatted = formatCitations(entries, boldNames, separateLists);
+                outputDiv.innerHTML = formatted;
+            };
+
+            reader.readAsText(file);
+        });
+
+        /**
+         * Parses BibTeX content and returns an array of entries.
+         * @param {string} content - The BibTeX content.
+         * @returns {Array} - Array of parsed BibTeX entries.
+         */
+        function parseBibTeX(content) {
+            const entries = [];
+            const entryRegex = /@(\w+)\s*{\s*([^,]+),([\s\S]*?)}\s*,?\s*(?=@|$)/gm;
+            let match;
+
+            while ((match = entryRegex.exec(content)) !== null) {
+                const entryType = match[1].toLowerCase();
+                const citationKey = match[2].trim();
+                const fieldsStr = match[3];
+                const fields = {};
+                const fieldRegex = /(\w+)\s*=\s*[{"]([^}"]*)[}"]/g;
+                let fieldMatch;
+                while ((fieldMatch = fieldRegex.exec(fieldsStr)) !== null) {
+                    fields[fieldMatch[1].toLowerCase()] = fieldMatch[2].trim();
+                }
+                entries.push({
+                    type: entryType,
+                    key: citationKey,
+                    fields: fields
+                });
+            }
+
+            return entries;
+        }
+
+        /**
+         * Parses RIS or ENW content and returns an array of entries.
+         * @param {string} content - The RIS or ENW content.
+         * @param {string} fileType - The file type ('ris' or 'enw').
+         * @returns {Array} - Array of parsed RIS/ENW entries.
+         */
+        function parseRIS(content, fileType) {
+            const entries = [];
+            let records = [];
+
+            if (fileType === 'ris') {
+                // Split RIS records by ER  - or %E
+                records = content.split(/ER\s*-\s*|\%E\s*/i).filter(record => record.trim() !== '');
+            } else if (fileType === 'enw') {
+                // Split ENW records by %0
+                // Use positive lookahead to retain the delimiter in the records
+                records = content.split(/(?=%0\s)/).filter(record => record.trim() !== '');
+            }
+
+            console.log(`Parsing ${records.length} records from a ${fileType.toUpperCase()} file.`);
+
+            records.forEach((record, recordIndex) => {
+                const fields = {};
+                const lines = record.split(/\r?\n/);
+                lines.forEach(line => {
+                    let match = null;
+                    if (fileType === 'ris') {
+                        match = line.match(/^([A-Z]{1,2})\s*-\s*(.*)$/); // RIS format
+                    } else if (fileType === 'enw') {
+                        match = line.match(/^%([A-Z]{1,2})\s+(.*)$/); // ENW format
+                    }
+                    if (match) {
+                        const tag = match[1].toLowerCase();
+                        const value = match[2].trim();
+                        if (fields[tag]) {
+                            // Handle multiple authors or multiple values
+                            if (Array.isArray(fields[tag])) {
+                                fields[tag].push(value);
+                            } else {
+                                fields[tag] = [fields[tag], value];
+                            }
+                        } else {
+                            fields[tag] = value;
+                        }
+                    }
+                });
+
+                // Map RIS/ENW tags to standard fields
+                const mappedFields = {};
+                mappedFields.type = fields.ty || fields['0'] || '';
+                mappedFields.key = fields.id || '';
+
+                // Author mapping based on file type
+                if (fileType === 'enw') {
+                    mappedFields.author = Array.isArray(fields.a) ? fields.a.join(' and ') : fields.a || '';
+                } else { // 'ris'
+                    mappedFields.author = Array.isArray(fields.au) ? fields.au.join(' and ') : fields.au || '';
+                }
+
+                // Handle both 'ti' (RIS) and 't' (ENW) for title
+                mappedFields.title = fields.ti || fields.t || '';
+                mappedFields.journal = fields.jo || fields.j || '';
+                mappedFields.booktitle = fields.bo || fields.b || '';
+                mappedFields.year = fields.py || fields.d || '';
+                mappedFields.volume = fields.vl || fields.v || '';
+                mappedFields.number = fields.is || fields.n || '';
+
+                // Combine SP and EP for pages if available (RIS)
+                if (fileType === 'ris') {
+                    if (fields.sp && fields.ep) {
+                        mappedFields.pages = `${fields.sp}-${fields.ep}`;
+                    } else if (fields.sp) {
+                        mappedFields.pages = fields.sp;
+                    }
+                } else if (fileType === 'enw') {
+                    if (fields.p) {
+                        mappedFields.pages = fields.p;
+                    }
+                }
+
+                // Handle eprint differently based on available tags
+                // For RIS: UR (URL), DO (DOI)
+                // For ENW: X (URL), DO (DOI)
+                if (fileType === 'ris') {
+                    if (fields.ur) {
+                        mappedFields.eprint = fields.ur;
+                    } else if (fields.do) {
+                        mappedFields.eprint = fields.do;
+                    }
+                } else if (fileType === 'enw') {
+                    if (fields.x) {
+                        mappedFields.eprint = fields.x;
+                    } else if (fields.do) {
+                        mappedFields.eprint = fields.do;
+                    }
+                }
+
+                // Map %@ to ISSN (ENW only)
+                if (fileType === 'enw' && fields['@']) {
+                    mappedFields.issn = fields['@'];
+                }
+
+                // Map %I to publisher (ENW only)
+                if (fileType === 'enw' && fields.i) {
+                    mappedFields.publisher = fields.i;
+                }
+
+                // Map %K to keywords if present (ENW only)
+                if (fileType === 'enw' && fields.k) {
+                    mappedFields.keywords = fields.k;
+                }
+
+                // Clean up empty fields
+                Object.keys(mappedFields).forEach(key => {
+                    if (mappedFields[key] === '') {
+                        delete mappedFields[key];
+                    }
+                });
+
+                // Log the parsed fields for debugging
+                console.log(`Record ${recordIndex + 1}:`, mappedFields);
+
+                entries.push({
+                    type: mappedFields.type,
+                    key: mappedFields.key,
+                    fields: mappedFields
+                });
+            });
+
+            return entries;
+        }
+
+        /**
+         * Converts the list of bold names from "First Name Last Name" to last names.
+         * @param {Array} boldNamesInput - Array of names in "First Name Last Name" format.
+         * @returns {Array} - Array of last names for bolding.
+         */
+        function convertBoldNames(boldNamesInput) {
+            return boldNamesInput.map(fullName => {
+                const parts = fullName.split(/\s+/);
+                return parts[parts.length - 1]; // Assuming last part is the last name
+            }).filter(name => name.length > 0);
+        }
+
+        /**
+         * Formats the citations based on the entries and bold names.
+         * @param {Array} entries - Array of citation entries.
+         * @param {Array} boldNames - Array of last names to bold.
+         * @param {boolean} separate - Whether to separate into Published and Preprints.
+         * @returns {string} - HTML string with formatted citations.
+         */
+        function formatCitations(entries, boldNames, separate) {
+            const published = [];
+            const preprints = [];
+            const preprintKeywords = ['preprint', 'biorxiv', 'arxiv'];
+
+            entries.forEach(entry => {
+                const title = entry.fields['title'] || '';
+                const year = parseInt(entry.fields['year']) || 0;
+                const authors = entry.fields['author'] ? entry.fields['author'].split(/ and | & /).map(a => a.trim()) : [];
+                const journal = entry.fields['journal'] || entry.fields['booktitle'] || '';
+                const publisher = entry.fields['publisher'] || '';
+                const volume = entry.fields['volume'] || '';
+                const number = entry.fields['number'] || '';
+                const pages = entry.fields['pages'] || '';
+                const keywords = entry.fields['keywords'] ? entry.fields['keywords'].toLowerCase() : '';
+                const eprint = entry.fields['eprint'] ? entry.fields['eprint'].toLowerCase() : '';
+
+                // Enhanced preprint detection: Check journal name as well
+                const isPreprint = preprintKeywords.some(keyword =>
+                    keywords.includes(keyword) ||
+                    title.toLowerCase().includes(keyword) ||
+                    eprint.includes(keyword) ||
+                    journal.toLowerCase().includes(keyword) || // Added this line
+                    (publisher.toLowerCase() === 'cold spring harbor laboratory' && !journal)
+                );
+
+                const formattedAuthors = formatAuthors(authors, boldNames);
+                const citation = {
+                    authors: formattedAuthors,
+                    year: year,
+                    title: title.replace(/^{|}$/g, ''), // Remove braces
+                    journal: journal,
+                    publisher: publisher,
+                    volume: volume,
+                    number: number,
+                    pages: pages,
+                    eprint: eprint
+                };
+
+                if (isPreprint) {
+                    preprints.push(citation);
+                } else {
+                    published.push(citation);
+                }
+            });
+
+            // Sort lists from most recent to oldest
+            published.sort((a, b) => b.year - a.year);
+            preprints.sort((a, b) => b.year - a.year);
+
+            // Generate HTML
+            let html = '';
+
+            if (separate) {
+                if (published.length > 0) {
+                    html += `<h2>Published Papers</h2>`;
+                    published.forEach((cite, index) => {
+                        const number = published.length - index;
+                        let citationStr = `${number}. ${cite.authors} (${cite.year}). ${cite.title}. ${cite.journal}`;
+
+                        // Add Volume and Number
+                        if (cite.volume) {
+                            citationStr += ` ${cite.volume}`;
+                            if (cite.number) {
+                                citationStr += `(${cite.number})`;
+                            }
+                        }
+
+                        // Add Pages
+                        if (cite.pages) {
+                            citationStr += `: ${cite.pages}`;
+                        }
+
+                        // Add Eprint if available
+                        if (cite.eprint) {
+                            // Determine if eprint is a DOI or URL
+                            if (/^doi:/i.test(cite.eprint) || /^10\.\d{4,9}\/[-._;()/:A-Z0-9]+$/i.test(cite.eprint)) {
+                                citationStr += ` DOI:${cite.eprint.replace(/^doi:/i, '')}`;
+                            } else if (/^https?:\/\//i.test(cite.eprint)) {
+                                citationStr += ` ${cite.eprint}`;
+                            } else {
+                                citationStr += ` ${cite.eprint}`;
+                            }
+                        }
+
+                        citationStr += `.`; // End of citation
+
+                        html += `<div class="citation">${citationStr}</div>`;
+                    });
+                }
+
+                if (preprints.length > 0) {
+                    html += `<h2>Preprints</h2>`;
+                    preprints.forEach((cite, index) => {
+                        const number = preprints.length - index;
+                        let preprintInfo = '';
+                        if (cite.eprint) {
+                            // Check if eprint is a DOI or a URL
+                            if (/^doi:/i.test(cite.eprint) || /^10\.\d{4,9}\/[-._;()/:A-Z0-9]+$/i.test(cite.eprint)) {
+                                preprintInfo = cite.eprint.startsWith('doi:') ? cite.eprint : `DOI:${cite.eprint}`;
+                            } else if (/^https?:\/\//i.test(cite.eprint)) {
+                                preprintInfo = cite.eprint;
+                            } else {
+                                preprintInfo = cite.eprint;
+                            }
+                        } else if (cite.publisher.toLowerCase() === 'cold spring harbor laboratory') {
+                            preprintInfo = 'bioRxiv';
+                        }
+
+                        let citationStr = `${number}. ${cite.authors} (${cite.year}). ${cite.title}. `;
+                        if (preprintInfo) {
+                            citationStr += `${preprintInfo}`;
+                        }
+
+                        // Add Volume and Number if available
+                        if (cite.volume) {
+                            citationStr += ` ${cite.volume}`;
+                            if (cite.number) {
+                                citationStr += `(${cite.number})`;
+                            }
+                        }
+
+                        // Add Pages if available
+                        if (cite.pages) {
+                            citationStr += `: ${cite.pages}`;
+                        }
+
+                        // Add Eprint if available and not already added
+                        if (cite.eprint && !preprintInfo) {
+                            if (/^doi:/i.test(cite.eprint) || /^10\.\d{4,9}\/[-._;()/:A-Z0-9]+$/i.test(cite.eprint)) {
+                                citationStr += ` DOI:${cite.eprint.replace(/^doi:/i, '')}`;
+                            } else if (/^https?:\/\//i.test(cite.eprint)) {
+                                citationStr += ` ${cite.eprint}`;
+                            } else {
+                                citationStr += ` ${cite.eprint}`;
+                            }
+                        }
+
+                        citationStr += `.`; // End of citation
+
+                        html += `<div class="citation">${citationStr}</div>`;
+                    });
+                }
+            } else {
+                // Combine both lists
+                const combined = [...published, ...preprints];
+                // Sort combined list by year descending
+                combined.sort((a, b) => b.year - a.year);
+                const total = combined.length;
+
+                if (total > 0) {
+                    html += `<h2>Citations</h2>`;
+                    combined.forEach((cite, index) => {
+                        const number = total - index;
+                        let citationStr = `${number}. ${cite.authors} (${cite.year}). ${cite.title}. `;
+
+                        if (cite.journal) {
+                            citationStr += `${cite.journal}`;
+                        } else if (cite.eprint || (cite.publisher.toLowerCase() === 'cold spring harbor laboratory')) {
+                            if (cite.eprint) {
+                                // Check if eprint is a DOI or URL
+                                if (/^doi:/i.test(cite.eprint) || /^10\.\d{4,9}\/[-._;()/:A-Z0-9]+$/i.test(cite.eprint)) {
+                                    citationStr += `${cite.eprint.startsWith('doi:') ? cite.eprint : `DOI:${cite.eprint}`}`;
+                                } else if (/^https?:\/\//i.test(cite.eprint)) {
+                                    citationStr += `${cite.eprint}`;
+                                } else {
+                                    citationStr += `${cite.eprint}`;
+                                }
+                            } else if (cite.publisher.toLowerCase() === 'cold spring harbor laboratory') {
+                                citationStr += `bioRxiv`;
+                            }
+                        }
+
+                        // Add Volume and Number
+                        if (cite.volume) {
+                            citationStr += ` ${cite.volume}`;
+                            if (cite.number) {
+                                citationStr += `(${cite.number})`;
+                            }
+                        }
+
+                        // Add Pages
+                        if (cite.pages) {
+                            citationStr += `: ${cite.pages}`;
+                        }
+
+                        // Add Eprint if available and not already added
+                        if (cite.eprint && !/^doi:/i.test(cite.eprint) && !/^https?:\/\//i.test(cite.eprint)) {
+                            citationStr += ` ${cite.eprint}`;
+                        }
+
+                        citationStr += `.`; // End of citation
+
+                        html += `<div class="citation">${citationStr}</div>`;
+                    });
+                }
+            }
+
+            return html;
+        }
+
+        /**
+         * Formats the authors' names into "Last name F.M." and wraps in bold if the last name is in the bold list.
+         * @param {Array} authors - Array of author names from citation entries.
+         * @param {Array} boldNames - Array of last names to bold.
+         * @returns {string} - Formatted authors string with bolding applied.
+         */
+        function formatAuthors(authors, boldNames) {
+            return authors.map(author => {
+                let marker = '';
+
+                // Check for markers at the end of the author name
+                if (author.endsWith('*')) {
+                    marker += '*';
+                    author = author.slice(0, -1).trim();
+                }
+                if (author.endsWith('#')) {
+                    marker += '#';
+                    author = author.slice(0, -1).trim();
+                }
+
+                // Split the author name into parts
+                // Assuming the format "Last, First Middle" or "First Middle Last"
+                let lastName, firstNames;
+                if (author.includes(',')) {
+                    // Format: "Last, First Middle"
+                    const parts = author.split(',');
+                    lastName = parts[0].trim();
+                    firstNames = parts[1] ? parts[1].trim().split(/\s+/) : [];
+                } else {
+                    // Format: "First Middle Last"
+                    const parts = author.split(/\s+/);
+                    lastName = parts.pop();
+                    firstNames = parts;
+                }
+
+                // Format initials
+                const initials = firstNames.map(name => name.charAt(0).toUpperCase() + '.').join('');
+
+                // Construct formatted name
+                let formattedName = `${lastName} ${initials}`;
+
+                // Append markers
+                if (marker) {
+                    formattedName += marker;
+                }
+
+                // Check if lastName is in boldNames
+                const isBold = boldNames.some(name => name.toLowerCase() === lastName.toLowerCase());
+
+                if (isBold) {
+                    formattedName = `<span class="bold">${formattedName}</span>`;
+                }
+
+                return formattedName;
+            }).join(', ');
+        }
+    </script>
+
+</body>
+</html>
