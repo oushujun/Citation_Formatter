@@ -615,7 +615,10 @@
                     html += `<h2>Published Papers</h2>`;
                     published.forEach((cite, index) => {
                         const number = published.length - index;
-                        let citationStr = `<span class="numbering">${number}.</span> ${cite.authors} (${cite.year}). ${cite.title}. <u>${cite.journal}</u>`;
+                        let citationStr = `<span class="numbering">${number}.</span> ${cite.authors} (${cite.year}). ${cite.title}. `;
+                        if (cite.journal) {
+                            citationStr += `<u>${cite.journal}</u>`;
+                        }
 
                         // Add Volume and Number
                         if (cite.volume) {
@@ -712,7 +715,7 @@
                     combined.forEach((cite, index) => {
                         const number = total - index;
                         let citationStr = `<span class="numbering">${number}.</span> ${cite.authors} (${cite.year}). ${cite.title}. `;
-
+        
                         if (cite.journal) {
                             citationStr += `<u>${cite.journal}</u>`;
                         } else if (cite.eprint || (cite.publisher.toLowerCase() === 'cold spring harbor laboratory')) {
@@ -729,7 +732,7 @@
                                 citationStr += `bioRxiv`;
                             }
                         }
-
+        
                         // Add Volume and Number
                         if (cite.volume) {
                             citationStr += ` ${cite.volume}`;
@@ -737,19 +740,19 @@
                                 citationStr += `(${cite.number})`;
                             }
                         }
-
+        
                         // Add Pages
                         if (cite.pages) {
                             citationStr += `: ${cite.pages}`;
                         }
-
+        
                         // Add Eprint if available and not already added
                         if (cite.eprint && !/^doi:/i.test(cite.eprint) && !/^https?:\/\//i.test(cite.eprint)) {
                             citationStr += ` ${cite.eprint}`;
                         }
-
+        
                         citationStr += `.`; // End of citation
-
+        
                         html += `<div class="citation">${citationStr}</div>`;
                     });
                 }
