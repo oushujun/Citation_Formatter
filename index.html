@@ -614,89 +614,83 @@
             return entries;
         }
 
-        /**
-         * Decodes LaTeX-style encodings into their respective Unicode characters.
-         * Handles common accents and special characters.
-         * @param {string} text - The text to decode.
-         * @returns {string} - The decoded text.
-         */
-        function decodeLaTeX(text) {
-            const latexPatterns = [
-                {pattern: /\\\"{a}/g, replacement: 'ä'},
-                {pattern: /\\\{\"a}/g, replacement: 'ä'}, // Added pattern for \{\"a}
-                {pattern: /\\\"{A}/g, replacement: 'Ä'},
-                {pattern: /\\\{\"A}/g, replacement: 'Ä'}, // Added pattern for \{\"A}
-                {pattern: /\\\"{e}/g, replacement: 'ë'},
-                {pattern: /\\\{\"e}/g, replacement: 'ë'}, // Added pattern for \{\"e}
-                {pattern: /\\\"{E}/g, replacement: 'Ë'},
-                {pattern: /\\\{\"E}/g, replacement: 'Ë'}, // Added pattern for \{\"E}
-                {pattern: /\\\"{i}/g, replacement: 'ï'},
-                {pattern: /\\\{\"i}/g, replacement: 'ï'}, // Added pattern for \{\"i}
-                {pattern: /\\\"{I}/g, replacement: 'Ï'},
-                {pattern: /\\\{\"I}/g, replacement: 'Ï'}, // Added pattern for \{\"I}
-                {pattern: /\\\"{o}/g, replacement: 'ö'},
-                {pattern: /\\\{\"o}/g, replacement: 'ö'}, // Added pattern for \{\"o}
-                {pattern: /\\\"{O}/g, replacement: 'Ö'},
-                {pattern: /\\\{\"O}/g, replacement: 'Ö'}, // Added pattern for \{\"O}
-                {pattern: /\\\"{u}/g, replacement: 'ü'},
-                {pattern: /\\\{\"u}/g, replacement: 'ü'}, // Added pattern for \{\"u}
-                {pattern: /\\\'{a}/g, replacement: 'á'},
-                {pattern: /\\\'{A}/g, replacement: 'Á'},
-                {pattern: /\\\'{e}/g, replacement: 'é'},
-                {pattern: /\\\'{E}/g, replacement: 'É'},
-                {pattern: /\\\'{i}/g, replacement: 'í'},
-                {pattern: /\\\'{I}/g, replacement: 'Í'},
-                {pattern: /\\\'{o}/g, replacement: 'ó'},
-                {pattern: /\\\'{O}/g, replacement: 'Ó'},
-                {pattern: /\\\'{u}/g, replacement: 'ú'},
-                {pattern: /\\\'{U}/g, replacement: 'Ú'},
-                {pattern: /\\`{a}/g, replacement: 'à'},
-                {pattern: /\\`{A}/g, replacement: 'À'},
-                {pattern: /\\`{e}/g, replacement: 'è'},
-                {pattern: /\\`{E}/g, replacement: 'È'},
-                {pattern: /\\^{a}/g, replacement: 'â'},
-                {pattern: /\\^{A}/g, replacement: 'Â'},
-                {pattern: /\\^{e}/g, replacement: 'ê'},
-                {pattern: /\\^{E}/g, replacement: 'Ê'},
-                {pattern: /\\^{i}/g, replacement: 'î'},
-                {pattern: /\\^{I}/g, replacement: 'Î'},
-                {pattern: /\\^{o}/g, replacement: 'ô'},
-                {pattern: /\\^{O}/g, replacement: 'Ô'},
-                {pattern: /\\^{u}/g, replacement: 'û'},
-                {pattern: /\\^{U}/g, replacement: 'Û'},
-                {pattern: /\\~{n}/g, replacement: 'ñ'},
-                {pattern: /\\~{N}/g, replacement: 'Ñ'},
-                {pattern: /\\~{a}/g, replacement: 'ã'},
-                {pattern: /\\~{A}/g, replacement: 'Ã'},
-                {pattern: /\\~{o}/g, replacement: 'õ'},
-                {pattern: /\\~{O}/g, replacement: 'Õ'},
-                {pattern: /\\c{c}/g, replacement: 'ç'},
-                {pattern: /\\c{C}/g, replacement: 'Ç'},
-                {pattern: /\\ss{}/g, replacement: 'ß'},
-                {pattern: /\\ae{}/g, replacement: 'æ'},
-                {pattern: /\\AE{}/g, replacement: 'Æ'},
-                {pattern: /\\o{}/g, replacement: 'ø'},
-                {pattern: /\\O{}/g, replacement: 'Ø'},
-                {pattern: /\\v{c}/g, replacement: 'č'},
-                {pattern: /\\v{C}/g, replacement: 'Č'},
-                {pattern: /\\v{s}/g, replacement: 'š'},
-                {pattern: /\\v{S}/g, replacement: 'Š'},
-                {pattern: /\\H{o}/g, replacement: 'ő'},
-                {pattern: /\\H{O}/g, replacement: 'Ő'},
-                {pattern: /\\h{o}/g, replacement: 'ő'},
-                {pattern: /\\h{O}/g, replacement: 'Ő'}
-                // Add more mappings as needed
-            ];
+/**
+ * Decodes LaTeX-style encodings into their respective Unicode characters.
+ * Handles common accents and special characters.
+ * @param {string} text - The text to decode.
+ * @returns {string} - The decoded text.
+ */
+function decodeLaTeX(text) {
+    const latexPatterns = [
+        // Accented characters
+        {pattern: /\\\"{?\s*a}?/g, replacement: 'ä'},
+        {pattern: /\\\"{?\s*A}?/g, replacement: 'Ä'},
+        {pattern: /\\\"{?\s*e}?/g, replacement: 'ë'},
+        {pattern: /\\\"{?\s*E}?/g, replacement: 'Ë'},
+        {pattern: /\\\"{?\s*i}?/g, replacement: 'ï'},
+        {pattern: /\\\"{?\s*I}?/g, replacement: 'Ï'},
+        {pattern: /\\\"{?\s*o}?/g, replacement: 'ö'},
+        {pattern: /\\\"{?\s*O}?/g, replacement: 'Ö'},
+        {pattern: /\\\"{?\s*u}?/g, replacement: 'ü'},
+        {pattern: /\\\"{?\s*U}?/g, replacement: 'Ü'},
+        {pattern: /\\\'{?\s*a}?/g, replacement: 'á'},
+        {pattern: /\\\'{?\s*A}?/g, replacement: 'Á'},
+        {pattern: /\\\'{?\s*e}?/g, replacement: 'é'},
+        {pattern: /\\\'{?\s*E}?/g, replacement: 'É'},
+        {pattern: /\\\'{?\s*i}?/g, replacement: 'í'},
+        {pattern: /\\\'{?\s*I}?/g, replacement: 'Í'},
+        {pattern: /\\\'{?\s*o}?/g, replacement: 'ó'},
+        {pattern: /\\\'{?\s*O}?/g, replacement: 'Ó'},
+        {pattern: /\\\'{?\s*u}?/g, replacement: 'ú'},
+        {pattern: /\\\'{?\s*U}?/g, replacement: 'Ú'},
+        {pattern: /\\\`{?\s*a}?/g, replacement: 'à'},
+        {pattern: /\\\`{?\s*A}?/g, replacement: 'À'},
+        {pattern: /\\\`{?\s*e}?/g, replacement: 'è'},
+        {pattern: /\\\`{?\s*E}?/g, replacement: 'È'},
+        {pattern: /\\\^{?\s*a}?/g, replacement: 'â'},
+        {pattern: /\\\^{?\s*A}?/g, replacement: 'Â'},
+        {pattern: /\\\^{?\s*e}?/g, replacement: 'ê'},
+        {pattern: /\\\^{?\s*E}?/g, replacement: 'Ê'},
+        {pattern: /\\\^{?\s*i}?/g, replacement: 'î'},
+        {pattern: /\\\^{?\s*I}?/g, replacement: 'Î'},
+        {pattern: /\\\^{?\s*o}?/g, replacement: 'ô'},
+        {pattern: /\\\^{?\s*O}?/g, replacement: 'Ô'},
+        {pattern: /\\\^{?\s*u}?/g, replacement: 'û'},
+        {pattern: /\\\^{?\s*U}?/g, replacement: 'Û'},
+        {pattern: /\\~{?\s*n}?/g, replacement: 'ñ'},
+        {pattern: /\\~{?\s*N}?/g, replacement: 'Ñ'},
+        {pattern: /\\~{?\s*a}?/g, replacement: 'ã'},
+        {pattern: /\\~{?\s*A}?/g, replacement: 'Ã'},
+        {pattern: /\\~{?\s*o}?/g, replacement: 'õ'},
+        {pattern: /\\~{?\s*O}?/g, replacement: 'Õ'},
+        {pattern: /\\c{?\s*c}?/g, replacement: 'ç'},
+        {pattern: /\\c{?\s*C}?/g, replacement: 'Ç'},
+        {pattern: /\\ss/g, replacement: 'ß'},
+        {pattern: /\\ae/g, replacement: 'æ'},
+        {pattern: /\\AE/g, replacement: 'Æ'},
+        {pattern: /\\o{}/g, replacement: 'ø'},
+        {pattern: /\\O{}/g, replacement: 'Ø'},
+        {pattern: /\\v{?\s*c}?/g, replacement: 'č'},
+        {pattern: /\\v{?\s*C}?/g, replacement: 'Č'},
+        {pattern: /\\v{?\s*s}?/g, replacement: 'š'},
+        {pattern: /\\v{?\s*S}?/g, replacement: 'Š'},
+        {pattern: /\\H{?\s*o}?/g, replacement: 'ő'},
+        {pattern: /\\H{?\s*O}?/g, replacement: 'Ő'},
+        // Add more mappings as needed
 
-            latexPatterns.forEach(({pattern, replacement}) => {
-                text = text.replace(pattern, replacement);
-            });
+        // Escaped underscore
+        {pattern: /\\_/g, replacement: '_'},
+    ];
 
-            // Remove remaining braces
-            text = text.replace(/[{}]/g, '');
+    latexPatterns.forEach(({pattern, replacement}) => {
+        text = text.replace(pattern, replacement);
+    });
 
-            return text;
-        }
+    // Remove remaining braces
+    text = text.replace(/[{}]/g, '');
+
+    return text;
+}
 
         /**
          * Converts the list of bold names from "First Name Last Name" to last names.
