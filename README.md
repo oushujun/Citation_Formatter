@@ -7,6 +7,7 @@ Citations are formatted as:
 `1. LastName F.M., LastName F.M. (2020). Title. Journal Volume(Issue): Pages. DOI/URL.`
   3. can highlight specific author(s)
   4. can seperate published papers and preprints
+  5. can handle LaTex-formatted special characters
    
 To use it, you can download the [index.html](https://github.com/oushujun/Citation_Formatter/blob/main/index.html) file or visit this page: https://oushujun.github.io/Citation_Formatter/.
 
