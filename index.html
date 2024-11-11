@@ -276,7 +276,7 @@
          */
         function parseBibTeX(content) {
             const entries = [];
-            // Improved regex to handle multiline entries and optional trailing commas
+            // Regex to match each BibTeX entry
             const entryRegex = /@(\w+)\s*{\s*([^,]+),([\s\S]*?)}\s*,?/gm;
             let match;
 
@@ -285,15 +285,57 @@
                 const citationKey = match[2].trim();
                 const fieldsStr = match[3];
                 const fields = {};
-                // Improved field regex to handle multiline and various spacing
-                // This regex captures fields with braces, quotes, or unbraced values
-                const fieldRegex = /(\w+)\s*=\s*(?:{([^}]*)}|\"([^"]*)\"|([^,}]*))/g;
-                let fieldMatch;
-                while ((fieldMatch = fieldRegex.exec(fieldsStr)) !== null) {
-                    const key = fieldMatch[1].toLowerCase();
-                    const value = fieldMatch[2] || fieldMatch[3] || fieldMatch[4] || '';
-                    fields[key] = value.trim();
+
+                let currentField = '';
+                let currentValue = '';
+                let insideBraces = false;
+                let insideQuotes = false;
+
+                for (let i = 0; i < fieldsStr.length; i++) {
+                    const char = fieldsStr[i];
+                    if (char === '{') {
+                        insideBraces = true;
+                        currentValue += char;
+                    } else if (char === '}') {
+                        insideBraces = false;
+                        currentValue += char;
+                    } else if (char === '"') {
+                        insideQuotes = !insideQuotes;
+                        currentValue += char;
+                    } else if (char === ',' && !insideBraces && !insideQuotes) {
+                        // End of current field
+                        const fieldMatch = currentValue.match(/^(\w+)\s*=\s*(.*)$/);
+                        if (fieldMatch) {
+                            const key = fieldMatch[1].toLowerCase();
+                            let value = fieldMatch[2].trim();
+                            if (value.startsWith('{') && value.endsWith('}')) {
+                                value = value.slice(1, -1);
+                            } else if (value.startsWith('"') && value.endsWith('"')) {
+                                value = value.slice(1, -1);
+                            }
+                            fields[key] = value;
+                        }
+                        currentValue = '';
+                    } else {
+                        currentValue += char;
+                    }
                 }
+
+                // Capture the last field if any
+                if (currentValue.trim() !== '') {
+                    const fieldMatch = currentValue.match(/^(\w+)\s*=\s*(.*)$/);
+                    if (fieldMatch) {
+                        const key = fieldMatch[1].toLowerCase();
+                        let value = fieldMatch[2].trim();
+                        if (value.startsWith('{') && value.endsWith('}')) {
+                            value = value.slice(1, -1);
+                        } else if (value.startsWith('"') && value.endsWith('"')) {
+                            value = value.slice(1, -1);
+                        }
+                        fields[key] = value;
+                    }
+                }
+
                 entries.push({
                     type: entryType,
                     key: citationKey,
@@ -564,7 +606,12 @@
 
             entries.forEach(entry => {
                 const title = entry.fields['title'] || '';
-                const year = parseInt(entry.fields['year']) || 0;
+                const yearRaw = entry.fields['year'] || '';
+                const year = parseInt(yearRaw) || 0;
+
+                // Debugging Logs
+                console.log(`Processing Citation: Year Raw = "${yearRaw}", Parsed Year = ${year}`);
+
                 const authors = entry.fields['author'] ? entry.fields['author'].split(/ and | & /).map(a => a.trim()) : [];
                 const journal = entry.fields['journal'] || entry.fields['booktitle'] || '';
                 const publisher = entry.fields['publisher'] || '';
@@ -715,7 +762,7 @@
                     combined.forEach((cite, index) => {
                         const number = total - index;
                         let citationStr = `<span class="numbering">${number}.</span> ${cite.authors} (${cite.year}). ${cite.title}. `;
-        
+
                         if (cite.journal) {
                             citationStr += `<u>${cite.journal}</u>`;
                         } else if (cite.eprint || (cite.publisher.toLowerCase() === 'cold spring harbor laboratory')) {
@@ -732,7 +779,7 @@
                                 citationStr += `bioRxiv`;
                             }
                         }
-        
+
                         // Add Volume and Number
                         if (cite.volume) {
                             citationStr += ` ${cite.volume}`;
@@ -740,19 +787,19 @@
                                 citationStr += `(${cite.number})`;
                             }
                         }
-        
+
                         // Add Pages
                         if (cite.pages) {
                             citationStr += `: ${cite.pages}`;
                         }
-        
+
                         // Add Eprint if available and not already added
                         if (cite.eprint && !/^doi:/i.test(cite.eprint) && !/^https?:\/\//i.test(cite.eprint)) {
                             citationStr += ` ${cite.eprint}`;
                         }
-        
+
                         citationStr += `.`; // End of citation
-        
+
                         html += `<div class="citation">${citationStr}</div>`;
                     });
                 }
