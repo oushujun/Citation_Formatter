@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Citation Formatter (v1.03)</title>
+    <title>Citation Formatter (v1.02)</title>
     <style>
         /* Reset some basic elements for consistency */
         * {
@@ -163,7 +163,7 @@
 <body>
 
     <div class="container">
-        <h1>Citation Formatter (v1.03)</h1>
+        <h1>Citation Formatter (v1.02)</h1>
 
         <div class="section">
             <label for="bibtexFile">Upload Citation File (.bib, .ris, .enw):</label>
@@ -189,7 +189,7 @@
 
     <!-- Footer Section -->
     <div class="footer">
-        © 2024 Shujun Ou, ChatGPT o1-mini, and o1-preview. <a href="https://github.com/oushujun/Citation_Formatter" target="_blank">View the source code on GitHub</a>.
+        © 2024 Shujun Ou and ChatGPT o1-mini. <a href="https://github.com/oushujun/Citation_Formatter" target="_blank">View the source code on GitHub</a>.
     </div>
 
     <script>
@@ -614,83 +614,83 @@
             return entries;
         }
 
-/**
- * Decodes LaTeX-style encodings into their respective Unicode characters.
- * Handles common accents and special characters.
- * @param {string} text - The text to decode.
- * @returns {string} - The decoded text.
- */
-function decodeLaTeX(text) {
-    const latexPatterns = [
-        // Accented characters
-        {pattern: /\\\"{?\s*a}?/g, replacement: 'ä'},
-        {pattern: /\\\"{?\s*A}?/g, replacement: 'Ä'},
-        {pattern: /\\\"{?\s*e}?/g, replacement: 'ë'},
-        {pattern: /\\\"{?\s*E}?/g, replacement: 'Ë'},
-        {pattern: /\\\"{?\s*i}?/g, replacement: 'ï'},
-        {pattern: /\\\"{?\s*I}?/g, replacement: 'Ï'},
-        {pattern: /\\\"{?\s*o}?/g, replacement: 'ö'},
-        {pattern: /\\\"{?\s*O}?/g, replacement: 'Ö'},
-        {pattern: /\\\"{?\s*u}?/g, replacement: 'ü'},
-        {pattern: /\\\"{?\s*U}?/g, replacement: 'Ü'},
-        {pattern: /\\\'{?\s*a}?/g, replacement: 'á'},
-        {pattern: /\\\'{?\s*A}?/g, replacement: 'Á'},
-        {pattern: /\\\'{?\s*e}?/g, replacement: 'é'},
-        {pattern: /\\\'{?\s*E}?/g, replacement: 'É'},
-        {pattern: /\\\'{?\s*i}?/g, replacement: 'í'},
-        {pattern: /\\\'{?\s*I}?/g, replacement: 'Í'},
-        {pattern: /\\\'{?\s*o}?/g, replacement: 'ó'},
-        {pattern: /\\\'{?\s*O}?/g, replacement: 'Ó'},
-        {pattern: /\\\'{?\s*u}?/g, replacement: 'ú'},
-        {pattern: /\\\'{?\s*U}?/g, replacement: 'Ú'},
-        {pattern: /\\\`{?\s*a}?/g, replacement: 'à'},
-        {pattern: /\\\`{?\s*A}?/g, replacement: 'À'},
-        {pattern: /\\\`{?\s*e}?/g, replacement: 'è'},
-        {pattern: /\\\`{?\s*E}?/g, replacement: 'È'},
-        {pattern: /\\\^{?\s*a}?/g, replacement: 'â'},
-        {pattern: /\\\^{?\s*A}?/g, replacement: 'Â'},
-        {pattern: /\\\^{?\s*e}?/g, replacement: 'ê'},
-        {pattern: /\\\^{?\s*E}?/g, replacement: 'Ê'},
-        {pattern: /\\\^{?\s*i}?/g, replacement: 'î'},
-        {pattern: /\\\^{?\s*I}?/g, replacement: 'Î'},
-        {pattern: /\\\^{?\s*o}?/g, replacement: 'ô'},
-        {pattern: /\\\^{?\s*O}?/g, replacement: 'Ô'},
-        {pattern: /\\\^{?\s*u}?/g, replacement: 'û'},
-        {pattern: /\\\^{?\s*U}?/g, replacement: 'Û'},
-        {pattern: /\\~{?\s*n}?/g, replacement: 'ñ'},
-        {pattern: /\\~{?\s*N}?/g, replacement: 'Ñ'},
-        {pattern: /\\~{?\s*a}?/g, replacement: 'ã'},
-        {pattern: /\\~{?\s*A}?/g, replacement: 'Ã'},
-        {pattern: /\\~{?\s*o}?/g, replacement: 'õ'},
-        {pattern: /\\~{?\s*O}?/g, replacement: 'Õ'},
-        {pattern: /\\c{?\s*c}?/g, replacement: 'ç'},
-        {pattern: /\\c{?\s*C}?/g, replacement: 'Ç'},
-        {pattern: /\\ss/g, replacement: 'ß'},
-        {pattern: /\\ae/g, replacement: 'æ'},
-        {pattern: /\\AE/g, replacement: 'Æ'},
-        {pattern: /\\o{}/g, replacement: 'ø'},
-        {pattern: /\\O{}/g, replacement: 'Ø'},
-        {pattern: /\\v{?\s*c}?/g, replacement: 'č'},
-        {pattern: /\\v{?\s*C}?/g, replacement: 'Č'},
-        {pattern: /\\v{?\s*s}?/g, replacement: 'š'},
-        {pattern: /\\v{?\s*S}?/g, replacement: 'Š'},
-        {pattern: /\\H{?\s*o}?/g, replacement: 'ő'},
-        {pattern: /\\H{?\s*O}?/g, replacement: 'Ő'},
-        // Add more mappings as needed
+        /**
+         * Decodes LaTeX-style encodings into their respective Unicode characters.
+         * Handles common accents and special characters.
+         * @param {string} text - The text to decode.
+         * @returns {string} - The decoded text.
+         */
+        function decodeLaTeX(text) {
+            const latexPatterns = [
+                // Accented characters
+                {pattern: /\\\"{?\s*a}?/g, replacement: 'ä'},
+                {pattern: /\\\"{?\s*A}?/g, replacement: 'Ä'},
+                {pattern: /\\\"{?\s*e}?/g, replacement: 'ë'},
+                {pattern: /\\\"{?\s*E}?/g, replacement: 'Ë'},
+                {pattern: /\\\"{?\s*i}?/g, replacement: 'ï'},
+                {pattern: /\\\"{?\s*I}?/g, replacement: 'Ï'},
+                {pattern: /\\\"{?\s*o}?/g, replacement: 'ö'},
+                {pattern: /\\\"{?\s*O}?/g, replacement: 'Ö'},
+                {pattern: /\\\"{?\s*u}?/g, replacement: 'ü'},
+                {pattern: /\\\"{?\s*U}?/g, replacement: 'Ü'},
+                {pattern: /\\\'{?\s*a}?/g, replacement: 'á'},
+                {pattern: /\\\'{?\s*A}?/g, replacement: 'Á'},
+                {pattern: /\\\'{?\s*e}?/g, replacement: 'é'},
+                {pattern: /\\\'{?\s*E}?/g, replacement: 'É'},
+                {pattern: /\\\'{?\s*i}?/g, replacement: 'í'},
+                {pattern: /\\\'{?\s*I}?/g, replacement: 'Í'},
+                {pattern: /\\\'{?\s*o}?/g, replacement: 'ó'},
+                {pattern: /\\\'{?\s*O}?/g, replacement: 'Ó'},
+                {pattern: /\\\'{?\s*u}?/g, replacement: 'ú'},
+                {pattern: /\\\'{?\s*U}?/g, replacement: 'Ú'},
+                {pattern: /\\\`{?\s*a}?/g, replacement: 'à'},
+                {pattern: /\\\`{?\s*A}?/g, replacement: 'À'},
+                {pattern: /\\\`{?\s*e}?/g, replacement: 'è'},
+                {pattern: /\\\`{?\s*E}?/g, replacement: 'È'},
+                {pattern: /\\\^{?\s*a}?/g, replacement: 'â'},
+                {pattern: /\\\^{?\s*A}?/g, replacement: 'Â'},
+                {pattern: /\\\^{?\s*e}?/g, replacement: 'ê'},
+                {pattern: /\\\^{?\s*E}?/g, replacement: 'Ê'},
+                {pattern: /\\\^{?\s*i}?/g, replacement: 'î'},
+                {pattern: /\\\^{?\s*I}?/g, replacement: 'Î'},
+                {pattern: /\\\^{?\s*o}?/g, replacement: 'ô'},
+                {pattern: /\\\^{?\s*O}?/g, replacement: 'Ô'},
+                {pattern: /\\\^{?\s*u}?/g, replacement: 'û'},
+                {pattern: /\\\^{?\s*U}?/g, replacement: 'Û'},
+                {pattern: /\\~{?\s*n}?/g, replacement: 'ñ'},
+                {pattern: /\\~{?\s*N}?/g, replacement: 'Ñ'},
+                {pattern: /\\~{?\s*a}?/g, replacement: 'ã'},
+                {pattern: /\\~{?\s*A}?/g, replacement: 'Ã'},
+                {pattern: /\\~{?\s*o}?/g, replacement: 'õ'},
+                {pattern: /\\~{?\s*O}?/g, replacement: 'Õ'},
+                {pattern: /\\c{?\s*c}?/g, replacement: 'ç'},
+                {pattern: /\\c{?\s*C}?/g, replacement: 'Ç'},
+                {pattern: /\\ss/g, replacement: 'ß'},
+                {pattern: /\\ae/g, replacement: 'æ'},
+                {pattern: /\\AE/g, replacement: 'Æ'},
+                {pattern: /\\o{}/g, replacement: 'ø'},
+                {pattern: /\\O{}/g, replacement: 'Ø'},
+                {pattern: /\\v{?\s*c}?/g, replacement: 'č'},
+                {pattern: /\\v{?\s*C}?/g, replacement: 'Č'},
+                {pattern: /\\v{?\s*s}?/g, replacement: 'š'},
+                {pattern: /\\v{?\s*S}?/g, replacement: 'Š'},
+                {pattern: /\\H{?\s*o}?/g, replacement: 'ő'},
+                {pattern: /\\H{?\s*O}?/g, replacement: 'Ő'},
+                // Add more mappings as needed
 
-        // Escaped underscore
-        {pattern: /\\_/g, replacement: '_'},
-    ];
+                // Escaped underscore
+                {pattern: /\\_/g, replacement: '_'},
+            ];
 
-    latexPatterns.forEach(({pattern, replacement}) => {
-        text = text.replace(pattern, replacement);
-    });
+            latexPatterns.forEach(({pattern, replacement}) => {
+                text = text.replace(pattern, replacement);
+            });
 
-    // Remove remaining braces
-    text = text.replace(/[{}]/g, '');
+            // Remove remaining braces
+            text = text.replace(/[{}]/g, '');
 
-    return text;
-}
+            return text;
+        }
 
         /**
          * Converts the list of bold names from "First Name Last Name" to last names.
@@ -829,7 +829,11 @@ function decodeLaTeX(text) {
                             preprintInfo = 'bioRxiv';
                         }
 
+                        // Construct citation string with underlined journal
                         let citationStr = `<span class="numbering">${number}.</span> ${cite.authors} (${cite.year}). ${cite.title}. `;
+                        if (cite.journal) {
+                            citationStr += `<u>${cite.journal}</u>. `;
+                        }
                         if (preprintInfo) {
                             citationStr += `${preprintInfo}`;
                         }
