@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Citation Formatter (v1.01)</title>
+    <title>Citation Formatter (v1.02)</title>
     <style>
         /* Reset some basic elements for consistency */
         * {
@@ -163,7 +163,7 @@
 <body>
 
     <div class="container">
-        <h1>Citation Formatter (v1.01)</h1>
+        <h1>Citation Formatter (v1.02)</h1>
 
         <div class="section">
             <label for="bibtexFile">Upload Citation File (.bib, .ris, .enw):</label>
@@ -193,6 +193,235 @@
     </div>
 
     <script>
+        /*** Start of bibtexParse-js Library ***/
+        var bibtexParse = (function () {
+            function BibtexParser() {
+                this.pos = 0;
+                this.input = "";
+                this.entries = new Array();
+                this.currentEntry = "";
+                this.currentKey = "";
+                this.currentType = "";
+                this.currentField = "";
+                this.currentValue = "";
+                this.currentFields = {};
+            }
+
+            BibtexParser.prototype.setInput = function(t) {
+                this.input = t;
+            };
+
+            BibtexParser.prototype.getEntries = function() {
+                return this.entries;
+            };
+
+            BibtexParser.prototype.isWhitespace = function(s) {
+                return (s == ' ' || s == '\r' || s == '\t' || s == '\n');
+            };
+
+            BibtexParser.prototype.match = function(s) {
+                this.skipWhitespace();
+                if (this.input.substring(this.pos, this.pos + s.length).toLowerCase() == s.toLowerCase()) {
+                    this.pos += s.length;
+                } else {
+                    throw new Error("Token mismatch, expected " + s + ", found " + this.input.substring(this.pos));
+                }
+                this.skipWhitespace();
+            };
+
+            BibtexParser.prototype.tryMatch = function(s) {
+                this.skipWhitespace();
+                if (this.input.substring(this.pos, this.pos + s.length).toLowerCase() == s.toLowerCase()) {
+                    return true;
+                } else {
+                    return false;
+                }
+            };
+
+            BibtexParser.prototype.skipWhitespace = function() {
+                while (this.isWhitespace(this.input[this.pos])) {
+                    this.pos++;
+                }
+                if (this.input[this.pos] == "%") {
+                    while (this.input[this.pos] != "\n") {
+                        this.pos++;
+                    }
+                    this.skipWhitespace();
+                }
+            };
+
+            BibtexParser.prototype.value_braces = function() {
+                var bracecount = 0;
+                this.match("{");
+                var start = this.pos;
+                while (true) {
+                    if (this.input[this.pos] == "}") {
+                        if (bracecount > 0) {
+                            bracecount--;
+                        } else {
+                            var end = this.pos;
+                            this.match("}");
+                            return this.input.substring(start, end);
+                        }
+                    } else if (this.input[this.pos] == "{") {
+                        bracecount++;
+                    } else if (this.pos == this.input.length - 1) {
+                        throw new Error("Unterminated value");
+                    }
+                    this.pos++;
+                }
+            };
+
+            BibtexParser.prototype.value_quotes = function() {
+                this.match('"');
+                var start = this.pos;
+                while (true) {
+                    if (this.input[this.pos] == '"') {
+                        var end = this.pos;
+                        this.match('"');
+                        return this.input.substring(start, end);
+                    } else if (this.input[this.pos] == '\\') {
+                        this.pos++;
+                    } else if (this.pos == this.input.length - 1) {
+                        throw new Error("Unterminated value:" + this.input.substring(start));
+                    }
+                    this.pos++;
+                }
+            };
+
+            BibtexParser.prototype.single_value = function() {
+                var start = this.pos;
+                if (this.input[this.pos] == "{") {
+                    return this.value_braces();
+                } else if (this.input[this.pos] == '"') {
+                    return this.value_quotes();
+                } else {
+                    var k = this.key();
+                    return k;
+                }
+            };
+
+            BibtexParser.prototype.value = function() {
+                var values = [];
+                values.push(this.single_value());
+                while (this.tryMatch("#")) {
+                    this.match("#");
+                    values.push(this.single_value());
+                }
+                return values.join("");
+            };
+
+            BibtexParser.prototype.key = function() {
+                var start = this.pos;
+                while (true) {
+                    if (this.pos == this.input.length) {
+                        throw new Error("Runaway key");
+                    }
+
+                    if (this.input[this.pos].match(/[a-zA-Z0-9_:\-]/)) {
+                        this.pos++
+                    } else {
+                        break;
+                    }
+                }
+                return this.input.substring(start, this.pos);
+            };
+
+            BibtexParser.prototype.key_equals_value = function() {
+                var key = this.key();
+                if (this.tryMatch("=")) {
+                    this.match("=");
+                    var val = this.value();
+                    return [key.toLowerCase(), val];
+                } else {
+                    throw new Error("Expected = after " + key);
+                }
+            };
+
+            BibtexParser.prototype.key_value_list = function() {
+                var kv = this.key_equals_value();
+                this.currentFields[kv[0]] = kv[1];
+                while (this.tryMatch(",")) {
+                    this.match(",");
+                    if (this.tryMatch("}")) {
+                        break;
+                    }
+                    kv = this.key_equals_value();
+                    this.currentFields[kv[0]] = kv[1];
+                }
+            };
+
+            BibtexParser.prototype.entry_body = function() {
+                this.currentFields = {};
+                this.currentKey = this.key();
+                if (this.tryMatch(",")) {
+                    this.match(",");
+                    this.key_value_list();
+                }
+            };
+
+            BibtexParser.prototype.directive = function() {
+                this.match("@");
+                return "@" + this.key();
+            };
+
+            BibtexParser.prototype.preamble = function() {
+                this.match("{");
+                this.value();
+                this.match("}");
+            };
+
+            BibtexParser.prototype.comment = function() {
+                this.match("{");
+                this.value();
+                this.match("}");
+            };
+
+            BibtexParser.prototype.entry = function() {
+                this.match("{");
+                this.entry_body();
+                this.match("}");
+                var entry = {
+                    citationKey: this.currentKey,
+                    entryType: this.currentType,
+                    entryTags: this.currentFields
+                };
+                this.entries.push(entry);
+            };
+
+            BibtexParser.prototype.bibtex = function() {
+                while (this.pos < this.input.length) {
+                    if (this.tryMatch("@")) {
+                        var directive = this.directive().toLowerCase();
+                        if (directive == "@preamble") {
+                            this.preamble();
+                        } else if (directive == "@comment") {
+                            this.comment();
+                        } else {
+                            this.currentType = directive.substring(1);
+                            this.entry();
+                        }
+                    } else {
+                        this.pos++;
+                    }
+                }
+            };
+
+            BibtexParser.prototype.parse = function() {
+                this.bibtex();
+            };
+
+            return {
+                toJSON: function(bibtex) {
+                    var parser = new BibtexParser();
+                    parser.setInput(bibtex);
+                    parser.parse();
+                    return parser.getEntries();
+                }
+            };
+        })();
+        /*** End of bibtexParse-js Library ***/
+
         document.getElementById('formatBtn').addEventListener('click', function() {
             const fileInput = document.getElementById('bibtexFile');
             const boldInput = document.getElementById('boldNames').value;
@@ -211,20 +440,12 @@
             reader.onload = function(e) {
                 let content = e.target.result;
 
-                // Replace LaTeX escaped underscores with actual underscores
-                content = content.replace(/\\_/g, '_');
-
-                // Replace non-breaking spaces with regular spaces
-                content = content.replace(/\u00A0/g, ' ');
-
-                // Decode HTML entities
-                content = decodeEntities(content);
-
+                // Do not modify the content before parsing
                 // Parse BibTeX before decoding LaTeX
                 let entries = [];
                 try {
                     if (fileExtension === 'bib') {
-                        entries = parseBibTeX(content);
+                        entries = bibtexParse.toJSON(content);
                     } else if (fileExtension === 'ris' || fileExtension === 'enw') {
                         entries = parseRIS(content, fileExtension);
                     } else {
@@ -244,18 +465,10 @@
 
                 // Now, apply decodeLaTeX on each field value
                 entries.forEach(entry => {
-                    for (let key in entry.fields) {
-                        if (entry.fields.hasOwnProperty(key)) {
-                            entry.fields[key] = decodeLaTeX(entry.fields[key]);
-                        }
-                    }
-                });
-
-                // Replace non-breaking spaces again, in case any remain after decoding LaTeX
-                entries.forEach(entry => {
-                    for (let key in entry.fields) {
-                        if (entry.fields.hasOwnProperty(key)) {
-                            entry.fields[key] = entry.fields[key].replace(/\u00A0/g, ' ');
+                    const fields = entry.entryTags || entry.fields;
+                    for (let key in fields) {
+                        if (fields.hasOwnProperty(key)) {
+                            fields[key] = decodeLaTeX(fields[key]);
                         }
                     }
                 });
@@ -268,89 +481,6 @@
 
             reader.readAsText(file);
         });
-
-        /**
-         * Parses BibTeX content and returns an array of entries.
-         * @param {string} content - The BibTeX content.
-         * @returns {Array} - Array of parsed BibTeX entries.
-         */
-        function parseBibTeX(content) {
-            const entries = [];
-            // Regex to match each BibTeX entry
-            const entryRegex = /@(\w+)\s*{\s*([^,]+),([\s\S]*?)}\s*,?/gm;
-            let match;
-
-            while ((match = entryRegex.exec(content)) !== null) {
-                const entryType = match[1].toLowerCase();
-                const citationKey = match[2].trim();
-                const fieldsStr = match[3];
-                const fields = {};
-
-                let currentField = '';
-                let currentValue = '';
-                let insideBraces = false;
-                let insideQuotes = false;
-
-                for (let i = 0; i < fieldsStr.length; i++) {
-                    const char = fieldsStr[i];
-                    if (char === '{') {
-                        insideBraces = true;
-                        currentValue += char;
-                    } else if (char === '}') {
-                        insideBraces = false;
-                        currentValue += char;
-                    } else if (char === '"') {
-                        insideQuotes = !insideQuotes;
-                        currentValue += char;
-                    } else if (char === ',' && !insideBraces && !insideQuotes) {
-                        // End of current field
-                        const fieldMatch = currentValue.match(/^(\w+)\s*=\s*(.*)$/);
-                        if (fieldMatch) {
-                            const key = fieldMatch[1].toLowerCase();
-                            let value = fieldMatch[2].trim();
-                            if (value.startsWith('{') && value.endsWith('}')) {
-                                value = value.slice(1, -1);
-                            } else if (value.startsWith('"') && value.endsWith('"')) {
-                                value = value.slice(1, -1);
-                            }
-                            fields[key] = value;
-                        }
-                        currentValue = '';
-                    } else {
-                        currentValue += char;
-                    }
-                }
-
-                // Capture the last field if any
-                if (currentValue.trim() !== '') {
-                    const fieldMatch = currentValue.match(/^(\w+)\s*=\s*(.*)$/);
-                    if (fieldMatch) {
-                        const key = fieldMatch[1].toLowerCase();
-                        let value = fieldMatch[2].trim();
-                        if (value.startsWith('{') && value.endsWith('}')) {
-                            value = value.slice(1, -1);
-                        } else if (value.startsWith('"') && value.endsWith('"')) {
-                            value = value.slice(1, -1);
-                        }
-                        fields[key] = value;
-                    }
-                }
-
-                entries.push({
-                    type: entryType,
-                    key: citationKey,
-                    fields: fields
-                });
-            }
-
-            console.log(`Parsed ${entries.length} BibTeX entries.`);
-            // Log each entry's fields for debugging
-            entries.forEach((entry, index) => {
-                console.log(`Entry ${index + 1}:`, entry.fields);
-            });
-
-            return entries;
-        }
 
         /**
          * Parses RIS or ENW content and returns an array of entries.
@@ -485,18 +615,6 @@
         }
 
         /**
-         * Decodes HTML entities into their respective characters.
-         * @param {string} text - The text to decode.
-         * @returns {string} - The decoded text.
-         */
-        function decodeEntities(text) {
-            // Create a temporary DOM element to leverage the browser's parsing
-            const txt = document.createElement("textarea");
-            txt.innerHTML = text;
-            return txt.value;
-        }
-
-        /**
          * Decodes LaTeX-style encodings into their respective Unicode characters.
          * Handles common accents and special characters.
          * @param {string} text - The text to decode.
@@ -605,21 +723,22 @@
             const preprintKeywords = ['preprint', 'biorxiv', 'arxiv'];
 
             entries.forEach(entry => {
-                const title = entry.fields['title'] || '';
-                const yearRaw = entry.fields['year'] || '';
+                const fields = entry.entryTags || entry.fields;
+                const title = fields['title'] || '';
+                const yearRaw = fields['year'] || '';
                 const year = parseInt(yearRaw) || 0;
 
                 // Debugging Logs
                 console.log(`Processing Citation: Year Raw = "${yearRaw}", Parsed Year = ${year}`);
 
-                const authors = entry.fields['author'] ? entry.fields['author'].split(/ and | & /).map(a => a.trim()) : [];
-                const journal = entry.fields['journal'] || entry.fields['booktitle'] || '';
-                const publisher = entry.fields['publisher'] || '';
-                const volume = entry.fields['volume'] || '';
-                const number = entry.fields['number'] || '';
-                const pages = entry.fields['pages'] || '';
-                const keywords = entry.fields['keywords'] ? entry.fields['keywords'].toLowerCase() : '';
-                const eprint = entry.fields['eprint'] ? entry.fields['eprint'].toLowerCase() : '';
+                const authors = fields['author'] ? fields['author'].split(/ and | & /).map(a => a.trim()) : [];
+                const journal = fields['journal'] || fields['booktitle'] || '';
+                const publisher = fields['publisher'] || '';
+                const volume = fields['volume'] || '';
+                const number = fields['number'] || '';
+                const pages = fields['pages'] || '';
+                const keywords = fields['keywords'] ? fields['keywords'].toLowerCase() : '';
+                const eprint = fields['eprint'] ? fields['eprint'].toLowerCase() : '';
 
                 // Enhanced preprint detection: Check journal name as well
                 const isPreprint = preprintKeywords.some(keyword => 
